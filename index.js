@@ -3,6 +3,10 @@ let c = document.getElementById("myCanvas");
 let ctx = c.getContext("2d");
 c.height = window.innerHeight;
 c.width = window.innerWidth;
+let radiusRatio = 1;
+let piece = false;
+let color = 'red';
+let guns = true;
 
 // Create Player
 let Player = function (x, y, radius, color,velocity) {
@@ -21,12 +25,12 @@ let Player = function (x, y, radius, color,velocity) {
     }
 }
 
-let PowerUp = function (x, y, width, color, boolean) {
+let PowerUp = function (x, y, width, color, type) {
     this.x = x;
     this.y = y;
     this.width = width;
     this.color = color;
-    this.value = boolean;
+    this.type = type;
 
     this.draw = function () {
         ctx.beginPath();
@@ -39,27 +43,27 @@ let PowerUp = function (x, y, width, color, boolean) {
 let Projectile = function (x, y, radius, color,velocity) {
     this.x = x;
     this.y = y;
-    this.radius = radius;
+    this.radius = radius * radiusRatio;
     this.color = color;
     this.velocity = velocity;
 
     this.draw = function () {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-        ctx.fillStyle = this.color;
-        ctx.fill();
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+            ctx.fillStyle = this.color;
+            ctx.fill();
     }
 
     this.update = function () {
-        this.x += this.velocity.x;
-        this.y += this.velocity.y;
-        this.draw();
+            this.x += this.velocity.x;
+            this.y += this.velocity.y;
+            this.draw();
     }
 }
 let Enemy = function (x, y, radius, color, velocity) {
     this.x = x;
     this.y = y;
-    this.radius = radius;
+    this.radius = radius + radiusRatio;
     this.color = color;
     this.velocity = velocity;
 
@@ -98,7 +102,8 @@ let Particle = function (x, y, radius, color, velocity) {
 
 function spawnPower () {
     setInterval(() => {
-        let power = new PowerUp(Math.random() * c.width, Math.random() * c.height, 20, 'white', true)
+        let power = new PowerUp(Math.random() * c.width, Math.random() * c.height, 20, 'white', 0)
+        power.type = random(1,4);
         powers.push(power);
         setTimeout(() => {
             powers.splice(0,1);
@@ -148,21 +153,53 @@ let animate = function () {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
     ctx.fillRect(0,0,c.width,c.height);
     player1.draw();
-    //draw PowerUp
-    // powers.forEach((power,index) => {
-    //     power.draw();
-    //     //check powerup collision
-    //     projectiles.forEach((projectile,projectileIndex) => {
-    //         const dist = Math.hypot(power.x - projectile.x,
-    //             power.y - projectile.y)
-    //         if (dist - power.width - projectile.radius < 1) {
-    //             powers.splice(index,1);
-    //             projectiles.splice(projectileIndex, 1);
-    //
-    //
-    //         }
-    //     })
-    // })
+
+    // draw PowerUp
+    powers.forEach((power,index) => {
+        power.draw();
+        //check powerup collision
+        projectiles.forEach((projectile,projectileIndex) => {
+            const dist = Math.hypot(power.x - projectile.x,
+                power.y - projectile.y)
+            if (dist - power.width - projectile.radius < 1) {
+                powers.splice(index,1);
+                projectiles.splice(projectileIndex, 1);
+                switch (power.type) {
+                    case 1: { //blowwwwww Up
+                        ctx.clearRect(0,0,c.width, c.height);
+                        enemies = [];
+                        setTimeout(() => {
+                            power.type = 0;
+                        },4000)
+                        break;}
+
+                    case 2: {//Bigboy
+                        radiusRatio = 3;
+                        player1.color = 'yellow';
+                        player1.radius += 10;
+                        color = 'yellow'
+                        setTimeout(() => {
+                            player1.color = 'white';
+                            power.type = 0;
+                            player1.radius -= 10;
+                            radiusRatio = 1;
+                            color = 'red';
+                        },5000)
+                        break;}
+                    case 3: //Piece enemies
+                        piece = true;
+                        player1.color = 'red';
+                        setTimeout(() => {
+                            piece = false;
+                            player1.color = 'white'
+                        }, 3000)
+                        break;
+                    case 4: //2 guns
+
+                }
+            }
+        })
+    })
 
     document.getElementById('scores').innerHTML = scores;
     //draw projectile
@@ -204,7 +241,7 @@ let animate = function () {
                             })
                         particles.push(particle);
                     }
-                    projectiles.splice(projectileIndex, 1);
+                if(!piece) {projectiles.splice(projectileIndex, 1);}
                     enemy.radius -= Math.random() * (60 - 20) + 20;
                     scores += 10;
                     if (enemy.radius < 0) {
@@ -235,7 +272,7 @@ addEventListener('click',(event) => {
          x: Math.cos(angle)*20,
          y: Math.sin(angle)*20
      }
-     const projectile = new Projectile(c.width/2, c.height/2, 20, 'red', velocity);
+     const projectile = new Projectile(c.width/2, c.height/2, 20, color, velocity);
      projectiles.push(projectile);
 })
 
@@ -243,7 +280,11 @@ spawnEnemies();
 spawnPower();
 animate();
 
-
+function random(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
+}
 
 
 
