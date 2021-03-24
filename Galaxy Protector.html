@@ -7,8 +7,18 @@
     <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
 
 </head>
-<body>
+<body class="bg-black">
     <div class="fixed text-white text-sm ml-2 mt-1 select-none"> Scores: <span id="scores">0</span></div>
+    <div class="fixed text-white text-sm ml-40 mt-1 select-none"> Lifes: <span id="life">3</span></div>
+    <div id="gameboard" class="fixed inset-0 flex items-center justify-center">
+        <div class="bg-white max-w-md w-full p-6 text-center">
+            <h1 id="scoreGameboard" class="text-4xl font-bold">0</h1>
+            <p class="text-sm">  Points</p>
+            <div>
+                <button class="bg-blue-500 text-white w-full p-3" type="button" id="startgame"> Start Game</button>
+            </div>
+        </div>
+    </div>
     <canvas class = "canvas" id="myCanvas" style="border:1px solid #d3d3d3;"></canvas>
 </body>
 <script src="index.js">
