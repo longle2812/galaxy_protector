@@ -3,10 +3,10 @@ let c = document.getElementById("myCanvas");
 let ctx = c.getContext("2d");
 c.height = window.innerHeight;
 c.width = window.innerWidth;
-var myGamePiece;
-var myObstacles = [];
 var mySound;
 var myMusic;
+let intervalid;
+let powerid;
 
 // Create Player
 let Player = function (x, y, radius, color,velocity) {
@@ -106,7 +106,7 @@ let Particle = function (x, y, radius, color, velocity) {
 }
 
 function spawnPower () {
-    setInterval(() => {
+        powerid = setInterval(() => {
         let power = new PowerUp(Math.random() * c.width, Math.random() * c.height, 20, 'white', 0)
         power.type = random(1,5);
         powers.push(power);
@@ -124,7 +124,7 @@ function spawnPower () {
 
 
 function spawnEnemies() {
-    setInterval(() => {
+        intervalid = setInterval(() => {
         let color =  "hsl( "+Math.random() * 360 +", 50%, 50%)";
         let radius = Math.random() * (30 - 10) +10;
         let enemyX;
@@ -265,11 +265,13 @@ let animate = function () {
                         localStorage.highScore = '' + scores;
                     }
                 }
-                console.log(highscore);
                 document.getElementById('scoreGameboard').innerHTML = scores;
                 document.getElementById("gameboard").style.display = 'flex';
+                clearInterval(intervalid);
+                clearInterval(powerid);
                 myMusic.stop();
                 cancelAnimationFrame(animationId);
+
             }
         }
 
