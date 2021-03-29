@@ -15,9 +15,28 @@ let Player = function (x, y, radius, color,velocity) {
     this.radius = radius;
     this.color = color;
     this.velocity = velocity;
+    this.friction = 0;
+    this.speedX = 0;
+    this.speedY = 0;
 
     this.draw = function () {
         // ctx.beginPath();
+        this.speedY += -this.speedY * 0.3;
+        this.speedX += -this.speedX * 0.3;
+        this.x += this.speedX;
+        this.y += this.speedY ;
+        if (this.x < 0) {
+            this.x = this.radius/2+10;
+        }
+        if (this.y < 0) {
+            this.y = this.radius/2+10;
+        }
+        if (this.y > c.height) {
+            this.y = c.height-this.radius/2-10;
+        }
+        if (this.x > c.width) {
+            this.x = c.width-this.radius/2-10;
+        }
         var imgPlayer = document.getElementById("player");
         ctx.drawImage(imgPlayer, this.x - 30, this.y - 30,60,60);
         // ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
@@ -25,6 +44,31 @@ let Player = function (x, y, radius, color,velocity) {
         // ctx.fill();
     }
 }
+
+// Create Boss
+let Boss = function (x, y, radius, speedX, speedY, bossHP) {
+    this.x = x;
+    this.y = y;
+    this.radius = radius;
+    this.speedX = speedX;
+    this.speedY = speedY;
+    this.HP = bossHP;
+    this.draw = function () {
+        // this.speedX += -this.speedX * 0.1;
+        // this.speedY += -this.speedY * 0.1;
+        if (this.x < player1.x) {
+            this.x += this.speedX;
+        }
+        else this.x -= this.speedX;
+        if (this.y < player1.y) {
+            this.y += this.speedY;
+        }
+        else this.y -= this.speedY;
+        var imgPlayer = document.getElementById("boss");
+        ctx.drawImage(imgPlayer, this.x - this.radius, this.y - this.radius,this.radius*2,this.radius*2);
+    }
+}
+
 
 let PowerUp = function (x, y, width, color, type) {
     this.x = x;
@@ -45,8 +89,8 @@ let PowerUp = function (x, y, width, color, type) {
 }
 
 let Projectile = function (x, y, radius, color,velocity) {
-    this.x = x;
-    this.y = y;
+    this.x = player1.x;
+    this.y = player1.y;
     this.radius = radius * radiusRatio;
     this.color = color;
     this.velocity = velocity;
@@ -71,6 +115,7 @@ let Projectile = function (x, y, radius, color,velocity) {
             this.draw();
     }
 }
+
 let Enemy = function (x, y, radius, color, velocity) {
     this.x = x;
     this.y = y;
@@ -131,7 +176,6 @@ function spawnPower () {
     }, 1500)
     }
 
-
 function spawnEnemies() {
         intervalid = setInterval(() => {
         let color =  "hsl( "+Math.random() * 360 +", 50%, 50%)";
@@ -158,22 +202,28 @@ function spawnEnemies() {
         }
         const enemy = new Enemy(enemyX,enemyY,radius,color,velocity)
         enemies.push(enemy);
-    }, Math.random() * 500 + 500)
+    }, Math.random() * 200 + 300)
 }
 
 let animationId
 let animate = function () {
     animationId = requestAnimationFrame(animate);
-    // ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    if ((scores > 0) && (scores % 5 == 0) && (scores % 1000 == 0)) {
+        bossCome = true;
+        document.getElementById('bossHP').innerHTML = boss.HP;
+    }
     var imgBackground = document.getElementById("background");
     ctx.drawImage(imgBackground, 0, 0,c.width,c.height);
     ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
     player1.draw();
+    if (bossCome) {
+        boss.draw();
+        enemies =[];
+    }
 
     //show scores & show lifes
     document.getElementById('scores').innerHTML = scores;
     document.getElementById('life').innerHTML = life;
-
 
 
     // draw PowerUp
@@ -249,6 +299,7 @@ let animate = function () {
     })
 
     // Check enemy collision & draw enemies
+    if (!bossCome){
     enemies.forEach((enemy, index) => {
         enemy.update();
         //End game
@@ -314,6 +365,23 @@ let animate = function () {
         }
         })
     })
+    }
+    else {
+        //Check collision Boss & projectile
+        projectiles.forEach((projectile,index) => {
+            const dist = Math.hypot(projectile.x - boss.x,
+                projectile.y - boss.y);
+            if (dist - boss.radius - projectile.radius <1 ) {
+                projectiles.splice(index, 1);
+                boss.HP -= 5;
+                if (boss.HP == 0) {
+                    scores += 500;
+                    bossCome = false;
+                    document.getElementById('bossHP').innerHTML = 0;
+                }
+            }
+        })
+    }
 }
 let projectiles = [];
 let particles = [];
@@ -322,12 +390,14 @@ let enemies = [];
 let scores = 0;
 let highscore = localStorage.highScore;
 let player1 = new Player(c.width / 2, c.height / 2, 20, 'white');
+let boss = new Boss(0,0,50,2,2)
 let radiusRatio = 1;
 let piece = false;
 let color = 'red';
 let velocityRatio = 1;
 let life = 3;
 let shotguns = false;
+let bossCome = false;
 
 function init () {
     projectiles = [];
@@ -337,19 +407,21 @@ function init () {
     scores = 0;
     highscore = localStorage.highScore;
     player1 = new Player(c.width / 2, c.height / 2, 20, 'white');
+    boss = new Boss(0,0,50,2,2,100);
     radiusRatio = 1;
     piece = false;
     color = 'red';
     velocityRatio = 1;
     life = 3;
     shotguns = false;
+    bossCome = false;
 }
 
 //shoot event
-addEventListener('click',(event) => {
+addEventListener('mousedown',(event) => {
     const angle = Math.atan2(
-         event.clientY - c.height/2,
-         event.clientX - c.width /2
+         event.clientY - player1.y,
+         event.clientX - player1.x
      )
      const velocity = {
          x: Math.cos(angle)*20,
@@ -359,16 +431,38 @@ addEventListener('click',(event) => {
      projectiles.push(projectile);
 })
 
+
 //player move
+addEventListener('keydown',(event) => {
+    switch (event.keyCode){
+        case 87: {
+            player1.speedY = -15;
+            break;
+        }
+        case 83: {
+            player1.speedY = +15;
+            break;
+        }
+        case 65: {
+            player1.speedX = -15;
+            break;
+        }
+        case 68: {
+            player1.speedX = +15;
+            break;
+        }
+    }
+})
 
+
+//Let's the game BEGIN
 document.getElementById("startgame").addEventListener('click', startgame);
-
 function startgame () {
-    // myGamePiece = new component(30, 30, "red", 10, 120);
-
     init();
     animate();
-    spawnEnemies();
+    if (!bossCome) {
+        spawnEnemies();
+    }
     spawnPower();
     document.getElementById("gameboard").style.display = 'none';
     mySound = new sound("hit.mp3");
@@ -381,13 +475,14 @@ function startgame () {
 }
 
 
-
+// Random anything u want
 function random(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min) + min); //The maximum is exclusive and the minimum is inclusive
 }
 
+// Some Epic Music
 function sound(src) {
     this.sound = document.createElement("audio");
     this.sound.src = src;
