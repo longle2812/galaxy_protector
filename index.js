@@ -378,6 +378,7 @@ let animate = function () {
                     scores += 500;
                     bossCome = false;
                     document.getElementById('bossHP').innerHTML = 0;
+                    boss.HP += 50;
                 }
             }
         })
