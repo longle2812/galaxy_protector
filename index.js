@@ -17,11 +17,12 @@ let Player = function (x, y, radius, color,velocity) {
     this.velocity = velocity;
 
     this.draw = function () {
-
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-        ctx.fillStyle = this.color;
-        ctx.fill();
+        // ctx.beginPath();
+        var imgPlayer = document.getElementById("player");
+        ctx.drawImage(imgPlayer, this.x - 30, this.y - 30,60,60);
+        // ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+        // ctx.fillStyle = this.color;
+        // ctx.fill();
     }
 }
 
@@ -33,10 +34,13 @@ let PowerUp = function (x, y, width, color, type) {
     this.type = type;
 
     this.draw = function () {
-        ctx.beginPath();
-        ctx.rect(this.x, this.y, this.width,this.width );
-        ctx.fillStyle = this.color;
-        ctx.fill();
+        // ctx.beginPath();
+        // ctx.rect(this.x, this.y, this.width,this.width );
+
+        var img = document.getElementById("power");
+        ctx.drawImage(img, this.x, this.y,60,60);
+        // ctx.fillStyle = this.color;
+        // ctx.fill();
     }
 }
 
@@ -48,15 +52,17 @@ let Projectile = function (x, y, radius, color,velocity) {
     this.velocity = velocity;
 
     this.draw = function () {
-            ctx.beginPath();
-            if (shotguns) {
-                ctx.arc(this.x +10, this.y -10, this.radius, 0, 2 * Math.PI);
-                ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-                ctx.arc(this.x -10, this.y + 10, this.radius, 0, 2 * Math.PI);
-            }
-            else ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-            ctx.fillStyle = this.color;
-            ctx.fill();
+            // ctx.beginPath();
+            // if (shotguns) {
+            //     ctx.arc(this.x +10, this.y -10, this.radius, 0, 2 * Math.PI);
+            //     ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+            //     ctx.arc(this.x -10, this.y + 10, this.radius, 0, 2 * Math.PI);
+            // }
+            // else ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+            // ctx.fillStyle = this.color;
+            // ctx.fill();
+        var img = document.getElementById("bullet");
+        ctx.drawImage(img, this.x-this.radius/2, this.y-this.radius/2,this.radius,this.radius);
     }
 
     this.update = function () {
@@ -68,15 +74,18 @@ let Projectile = function (x, y, radius, color,velocity) {
 let Enemy = function (x, y, radius, color, velocity) {
     this.x = x;
     this.y = y;
-    this.radius = radius + radiusRatio;
+    this.radius = radius;
     this.color = color;
     this.velocity = velocity;
+    this.id = random(1,6);
 
     this.draw = function () {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-        ctx.fillStyle = this.color;
-        ctx.fill();
+        // ctx.beginPath();
+        // ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+        // ctx.fillStyle = this.color;
+        var imgEnemy = document.getElementById("enemy"+this.id);
+        ctx.drawImage(imgEnemy, this.x-25, this.y-25,50,50);
+        // ctx.fill();
     }
     this.update = function () {
             this.x += this.velocity.x;
@@ -126,7 +135,7 @@ function spawnPower () {
 function spawnEnemies() {
         intervalid = setInterval(() => {
         let color =  "hsl( "+Math.random() * 360 +", 50%, 50%)";
-        let radius = Math.random() * (30 - 10) +10;
+        let radius = 30;
         let enemyX;
         let enemyY;
         if (Math.random() < 0.5) {
@@ -155,8 +164,10 @@ function spawnEnemies() {
 let animationId
 let animate = function () {
     animationId = requestAnimationFrame(animate);
+    // ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    var imgBackground = document.getElementById("background");
+    ctx.drawImage(imgBackground, 0, 0,c.width,c.height);
     ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-    ctx.fillRect(0,0,c.width,c.height);
     player1.draw();
 
     //show scores & show lifes
@@ -232,7 +243,7 @@ let animate = function () {
         projectile.update();
     })
 
-    //draw particles
+    //draw particles when collision
     particles.forEach((particle) => {
         particle.update();
     })
@@ -293,7 +304,7 @@ let animate = function () {
                     }
                 mySound.play();
                 if(!piece) {projectiles.splice(projectileIndex, 1);}
-                    enemy.radius -= Math.random() * (60 - 20) + 20;
+                    enemy.radius -= Math.random() * (60 - 20) + 30;
                     scores += 10;
                     if (enemy.radius < 0) {
                         enemies.splice(index, 1);
@@ -344,9 +355,11 @@ addEventListener('click',(event) => {
          x: Math.cos(angle)*20,
          y: Math.sin(angle)*20
      }
-     const projectile = new Projectile(c.width/2, c.height/2, 20, color, velocity);
+     const projectile = new Projectile(c.width/2, c.height/2, 30, color, velocity);
      projectiles.push(projectile);
 })
+
+//player move
 
 document.getElementById("startgame").addEventListener('click', startgame);
 
