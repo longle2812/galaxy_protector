@@ -7,8 +7,11 @@ var mySound;
 var myMusic;
 let intervalid;
 let powerid;
+let animationId;
+let timeEnemy = Math.random() * 200 + 300;
+let timePower = 1500;
 
-// Create Player
+// Class Player
 let Player = function (x, y, radius, color,velocity) {
     this.x = x;
     this.y = y;
@@ -45,7 +48,7 @@ let Player = function (x, y, radius, color,velocity) {
     }
 }
 
-// Create Boss
+// Class Boss
 let Boss = function (x, y, radius, speedX, speedY, bossHP) {
     this.x = x;
     this.y = y;
@@ -69,7 +72,7 @@ let Boss = function (x, y, radius, speedX, speedY, bossHP) {
     }
 }
 
-
+// Class Power up
 let PowerUp = function (x, y, width, color, type) {
     this.x = x;
     this.y = y;
@@ -88,6 +91,7 @@ let PowerUp = function (x, y, width, color, type) {
     }
 }
 
+//Class Projectile
 let Projectile = function (x, y, radius, color,velocity) {
     this.x = player1.x;
     this.y = player1.y;
@@ -116,6 +120,7 @@ let Projectile = function (x, y, radius, color,velocity) {
     }
 }
 
+// Class Enemy
 let Enemy = function (x, y, radius, color, velocity) {
     this.x = x;
     this.y = y;
@@ -139,6 +144,7 @@ let Enemy = function (x, y, radius, color, velocity) {
         }
 }
 
+// Class Particle
 let Particle = function (x, y, radius, color, velocity) {
     this.x = x;
     this.y = y;
@@ -173,7 +179,7 @@ function spawnPower () {
         particles.forEach((particle, index) => {
             particles.splice(index, Math.random() * 10);
         })
-    }, 1500)
+    }, timePower);
     }
 
 function spawnEnemies() {
@@ -202,10 +208,63 @@ function spawnEnemies() {
         }
         const enemy = new Enemy(enemyX,enemyY,radius,color,velocity)
         enemies.push(enemy);
-    }, Math.random() * 200 + 300)
+    }, timeEnemy)
 }
 
-let animationId
+let projectiles = [];
+let particles = [];
+let powers = [];
+let enemies = [];
+let scores = 0;
+let highscore = localStorage.highScore;
+let player1 = new Player(c.width / 2, c.height / 2, 20, 'white');
+let boss = new Boss(0,0,50,2,2)
+let radiusRatio = 1;
+let piece = false;
+let color = 'red';
+let velocityRatio = 1;
+let life = 3;
+let shotguns = false;
+let bossCome = false;
+
+function init () {
+    projectiles = [];
+    particles = [];
+    powers = [];
+    enemies = [];
+    scores = 0;
+    highscore = localStorage.highScore;
+    player1 = new Player(c.width / 2, c.height / 2, 20, 'white');
+    boss = new Boss(0,0,50,2,2,100);
+    radiusRatio = 1;
+    piece = false;
+    color = 'red';
+    velocityRatio = 1;
+    life = 3;
+    shotguns = false;
+    bossCome = false;
+}
+
+//Let's the game BEGIN
+document.getElementById("startgame").addEventListener('click', startgame);
+function startgame () {
+    init();
+    animate();
+    if (!bossCome) {
+        spawnEnemies();
+    }
+    spawnPower();
+    document.getElementById("gameboard").style.display = 'none';
+    mySound = new sound("hit.mp3");
+    myMusic = new sound('gametheme.mp3');
+    sound1 = new sound('powerup.mp3')
+    sound2 = new sound('powerup2.mp3')
+    sound3 = new sound('powerup3.mp3')
+    sound4 = new sound('powerup4.mp3')
+    myMusic.play();
+}
+
+//Render
 let animate = function () {
     animationId = requestAnimationFrame(animate);
     if ((scores > 0) && (scores % 5 == 0) && (scores % 1000 == 0)) {
@@ -288,7 +347,7 @@ let animate = function () {
         // remove projectiles go out screen
         if ((projectile.x < 0) || (projectile.x > c.width) ||
             (projectile.y < 0) || (projectile.y > c.height)) {
-           projectiles.splice(index,1 ) ;
+            projectiles.splice(index,1 ) ;
         }
         projectile.update();
     })
@@ -300,71 +359,71 @@ let animate = function () {
 
     // Check enemy collision & draw enemies
     if (!bossCome){
-    enemies.forEach((enemy, index) => {
-        enemy.update();
-        //End game
-        const dist = Math.hypot(player1.x - enemy.x, player1.y - enemy.y)
-        if (dist - enemy.radius - player1.radius < 1) {
-            enemies.splice(index,1);
-            for (let i = 0; i < enemy.radius; i++) {
-                let particle1 = new Particle(enemy.x,
-                    enemy.y, Math.random() * 5, enemy.color, {
-                        x: Math.random() - 0.5,
-                        y: Math.random() - 0.5
-                    })
-                particles.push(particle1);
-            }
-            life--;
-            if (life <= 0) {
-                //Check Highscore
-                if (isNaN(highscore)) {
-                    highscore = 0;
-                    localStorage.highScore = '0';
-                }
-                if (!(typeof highscore === 'undefined')) {
-                    if (scores>highscore) {
-                        highscore = scores;
-                        localStorage.highScore = '' + scores;
-                    }
-                }
-                document.getElementById('scoreGameboard').innerHTML = scores;
-                document.getElementById("gameboard").style.display = 'flex';
-                clearInterval(intervalid);
-                clearInterval(powerid);
-                myMusic.stop();
-                cancelAnimationFrame(animationId);
-
-            }
-        }
-
-        projectiles.forEach((projectile, projectileIndex) => {
-        const dist = Math.hypot(projectile.x - enemy.x,
-            projectile.y - enemy.y
-        )
-        // projectiles hit enemies
-        if (dist - enemy.radius - projectile.radius < 1){
-            setTimeout(() => {
-                //create particles for collision
+        enemies.forEach((enemy, index) => {
+            enemy.update();
+            //End game
+            const dist = Math.hypot(player1.x - enemy.x, player1.y - enemy.y)
+            if (dist - enemy.radius - player1.radius < 1) {
+                enemies.splice(index,1);
                 for (let i = 0; i < enemy.radius; i++) {
-                        let particle = new Particle(projectile.x,
-                            projectile.y, Math.random() * 5, enemy.color, {
-                                x: Math.random() - 0.5,
-                                y: Math.random() - 0.5
-                            })
-                        particles.push(particle);
+                    let particle1 = new Particle(enemy.x,
+                        enemy.y, Math.random() * 5, enemy.color, {
+                            x: Math.random() - 0.5,
+                            y: Math.random() - 0.5
+                        })
+                    particles.push(particle1);
+                }
+                life--;
+                if (life <= 0) {
+                    //Check Highscore
+                    if (isNaN(highscore)) {
+                        highscore = 0;
+                        localStorage.highScore = '0';
                     }
-                mySound.play();
-                if(!piece) {projectiles.splice(projectileIndex, 1);}
-                    enemy.radius -= Math.random() * (60 - 20) + 30;
-                    scores += 10;
-                    if (enemy.radius < 0) {
-                        enemies.splice(index, 1);
-                        scores += 30;
+                    if (!(typeof highscore === 'undefined')) {
+                        if (scores>highscore) {
+                            highscore = scores;
+                            localStorage.highScore = '' + scores;
+                        }
                     }
-                },0)
-        }
+                    document.getElementById('scoreGameboard').innerHTML = scores;
+                    document.getElementById("gameboard").style.display = 'flex';
+                    clearInterval(intervalid);
+                    clearInterval(powerid);
+                    myMusic.stop();
+                    cancelAnimationFrame(animationId);
+
+                }
+            }
+
+            projectiles.forEach((projectile, projectileIndex) => {
+                const dist = Math.hypot(projectile.x - enemy.x,
+                    projectile.y - enemy.y
+                )
+                // projectiles hit enemies
+                if (dist - enemy.radius - projectile.radius < 1){
+                    setTimeout(() => {
+                        //create particles for collision
+                        for (let i = 0; i < enemy.radius; i++) {
+                            let particle = new Particle(projectile.x,
+                                projectile.y, Math.random() * 5, enemy.color, {
+                                    x: Math.random() - 0.5,
+                                    y: Math.random() - 0.5
+                                })
+                            particles.push(particle);
+                        }
+                        mySound.play();
+                        if(!piece) {projectiles.splice(projectileIndex, 1);}
+                        enemy.radius -= Math.random() * (60 - 20) + 30;
+                        scores += 10;
+                        if (enemy.radius < 0) {
+                            enemies.splice(index, 1);
+                            scores += 30;
+                        }
+                    },0)
+                }
+            })
         })
-    })
     }
     else {
         //Check collision Boss & projectile
@@ -379,59 +438,27 @@ let animate = function () {
                     bossCome = false;
                     document.getElementById('bossHP').innerHTML = 0;
                     boss.HP += 50;
+                    timeEnemy += random(100,300);
+                    timePower -= random(100,300);
                 }
             }
         })
     }
 }
-let projectiles = [];
-let particles = [];
-let powers = [];
-let enemies = [];
-let scores = 0;
-let highscore = localStorage.highScore;
-let player1 = new Player(c.width / 2, c.height / 2, 20, 'white');
-let boss = new Boss(0,0,50,2,2)
-let radiusRatio = 1;
-let piece = false;
-let color = 'red';
-let velocityRatio = 1;
-let life = 3;
-let shotguns = false;
-let bossCome = false;
 
-function init () {
-    projectiles = [];
-    particles = [];
-    powers = [];
-    enemies = [];
-    scores = 0;
-    highscore = localStorage.highScore;
-    player1 = new Player(c.width / 2, c.height / 2, 20, 'white');
-    boss = new Boss(0,0,50,2,2,100);
-    radiusRatio = 1;
-    piece = false;
-    color = 'red';
-    velocityRatio = 1;
-    life = 3;
-    shotguns = false;
-    bossCome = false;
-}
-
-//shoot event
+//Shoot event
 addEventListener('mousedown',(event) => {
     const angle = Math.atan2(
-         event.clientY - player1.y,
-         event.clientX - player1.x
-     )
-     const velocity = {
-         x: Math.cos(angle)*20,
-         y: Math.sin(angle)*20
-     }
-     const projectile = new Projectile(c.width/2, c.height/2, 30, color, velocity);
-     projectiles.push(projectile);
+        event.clientY - player1.y,
+        event.clientX - player1.x
+    )
+    const velocity = {
+        x: Math.cos(angle)*20,
+        y: Math.sin(angle)*20
+    }
+    const projectile = new Projectile(c.width/2, c.height/2, 30, color, velocity);
+    projectiles.push(projectile);
 })
-
 
 //player move
 addEventListener('keydown',(event) => {
@@ -454,27 +481,6 @@ addEventListener('keydown',(event) => {
         }
     }
 })
-
-
-//Let's the game BEGIN
-document.getElementById("startgame").addEventListener('click', startgame);
-function startgame () {
-    init();
-    animate();
-    if (!bossCome) {
-        spawnEnemies();
-    }
-    spawnPower();
-    document.getElementById("gameboard").style.display = 'none';
-    mySound = new sound("hit.mp3");
-    myMusic = new sound('gametheme.mp3');
-    sound1 = new sound('powerup.mp3')
-    sound2 = new sound('powerup2.mp3')
-    sound3 = new sound('powerup3.mp3')
-    sound4 = new sound('powerup4.mp3')
-    myMusic.play();
-}
-
 
 // Random anything u want
 function random(min, max) {
